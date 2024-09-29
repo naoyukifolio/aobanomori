@@ -1,36 +1,45 @@
 import streamlit as st
+import sqlite3
 import pandas as pd
-import datetime
 
-# 初期設定
-if 'equipment_list' not in st.session_state:
-    st.session_state.equipment_list = []
+# データベース接続関数
+def get_connection():
+    conn = sqlite3.connect('equipment_management.db')
+    return conn
 
-# タイトル
+# データをデータベースに保存する関数
+def save_equipment(name, location, installation_date, maintenance_interval):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO equipment (name, location, installation_date, maintenance_interval)
+        VALUES (?, ?, ?, ?)
+    ''', (name, location, installation_date, maintenance_interval))
+    conn.commit()
+    conn.close()
+
+# データを取得する関数
+def get_all_equipment():
+    conn = get_connection()
+    df = pd.read_sql_query("SELECT * FROM equipment", conn)
+    conn.close()
+    return df
+
+# StreamlitアプリのUI
 st.title("マンション設備管理アプリ")
 
-# 設備情報の登録フォーム
+# 設備情報の登録
 st.header("新しい設備の登録")
-equipment_name = st.text_input("設備名")
+name = st.text_input("設備名")
 location = st.text_input("設置場所")
-installation_date = st.date_input("設置日", datetime.date.today())
-maintenance_interval = st.number_input("メンテナンス周期（ヶ月）", min_value=1)
+installation_date = st.date_input("設置日")
+maintenance_interval = st.number_input("メンテナンス周期（月）", min_value=1)
 
 if st.button("登録"):
-    equipment = {
-        "設備名": equipment_name,
-        "設置場所": location,
-        "設置日": installation_date,
-        "メンテナンス周期": maintenance_interval,
-        "次回メンテナンス": installation_date + pd.DateOffset(months=maintenance_interval)
-    }
-    st.session_state.equipment_list.append(equipment)
+    save_equipment(name, location, installation_date, maintenance_interval)
     st.success("設備が登録されました！")
 
-# 設備リストの表示
-st.header("登録された設備")
-if st.session_state.equipment_list:
-    df = pd.DataFrame(st.session_state.equipment_list)
-    st.dataframe(df)
-else:
-    st.write("現在、登録されている設備はありません。")
+# 登録された設備を表示
+st.header("登録された設備一覧")
+equipment_df = get_all_equipment()
+st.dataframe(equipment_df)
