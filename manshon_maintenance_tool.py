@@ -32,10 +32,15 @@ def initialize_database():
 def save_equipment(name, location, installation_date, maintenance_interval):
     conn = get_connection()
     cursor = conn.cursor()
+    
+    # installation_dateを文字列に変換
+    installation_date_str = installation_date.strftime("%Y-%m-%d")
+    
     cursor.execute('''
         INSERT INTO equipment (name, location, installation_date, maintenance_interval)
         VALUES (?, ?, ?, ?)
-    ''', (name, location, installation_date, maintenance_interval))
+    ''', (name, location, installation_date_str, maintenance_interval))
+    
     conn.commit()
     conn.close()
 
@@ -60,8 +65,11 @@ installation_date = st.date_input("設置日")
 maintenance_interval = st.number_input("メンテナンス周期（月）", min_value=1)
 
 if st.button("登録"):
-    save_equipment(name, location, installation_date, maintenance_interval)
-    st.success("設備が登録されました！")
+    try:
+        save_equipment(name, location, installation_date, maintenance_interval)
+        st.success("設備が登録されました！")
+    except Exception as e:
+        st.error(f"設備の登録中にエラーが発生しました: {e}")
 
 # 登録された設備を表示
 st.header("登録された設備一覧")
