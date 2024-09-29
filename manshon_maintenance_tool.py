@@ -13,20 +13,24 @@ def get_connection():
 
 # データベースとテーブルを初期化する関数
 def initialize_database():
-    if not os.path.exists(DB_FILE):
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS equipment (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                location TEXT NOT NULL,
-                installation_date TEXT NOT NULL,
-                maintenance_interval INTEGER NOT NULL
-            )
-        ''')
-        conn.commit()
-        conn.close()
+    # データベースに接続
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    # テーブルを作成（テーブルがない場合のみ）
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS equipment (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            location TEXT NOT NULL,
+            installation_date TEXT NOT NULL,
+            maintenance_interval INTEGER NOT NULL
+        )
+    ''')
+    
+    # 変更を保存し接続を閉じる
+    conn.commit()
+    conn.close()
 
 # データをデータベースに保存する関数
 def save_equipment(name, location, installation_date, maintenance_interval):
